@@ -2,6 +2,8 @@
 layout: post
 title: What is DMARC, DKIM and SPF?
 date: 2024-03-01 +0100
+categories: [Notes]
+tags: [spoofing, cloud, notes, wiki, mail]
 ---
 
 **DMARC, DKIM and SPF** are three different authenticacion methods for electronic mail. They all try to prevent from spammers, phishing and spoofing techniques.
