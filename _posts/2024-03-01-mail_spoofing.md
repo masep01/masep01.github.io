@@ -2,7 +2,7 @@
 layout: post
 title: What is DMARC, DKIM and SPF?
 date: 2024-03-01 +0100
-categories: [Notes]
+categories: [Notes, Spoofing]
 tags: [spoofing, cloud, notes, wiki, mail]
 ---
 
@@ -62,8 +62,54 @@ For example, in `v=spf1 mx ptr ~all`
 * `~all` Deny all the unmatched mails with the previous. 
 
 ## DKIM
+**DomainKeys Identified Mail (DKIM)** allow domain owners to sign automatically emails. DKIM uses public key cryptography. The validation is done by retrieving domain's public key from DNS. The PK is located in the domain's TXT record.
+
+To request the key, the **domain name** and **selector** are essential. This can be found in the mail header `DKIM-Signature`, e.g., `d=gmail.com;s=123456`.
 
 ## DMARC
+**Domain-based Message Authentication, Reporting & Conformance (DMARC)** tells a receiving email server what to do given the results after checking SPF and DKIM. It can instruct mail servers to quarantine emails that fail **SPF** or **DKIM** (or both), to reject such emails, or to deliver them.
+
+**DMARC policies** are stored in **DMARC records**. A DMARC record can also contain instructions to send reports to domain administrators about which emails are passing and failing these checks.
+
+### DMARC Policies
+As explained above, a **DMARC policy** determines what happens to an email after it is checked against SPF and DKIM records.
+
+Example.com's domain policy could be:
+
+`If an email fails the DKIM and SPF tests, mark it as spam.`
+
+That DMARC policy would actually look like:
+
+`v=DMARC1; p=quarantine; adkim=s; aspf=s;`
+
+### DMARC Tags
+
+| Tag Name | Purpose                                       | Sample                         |  
+|---------|-----------------------------------------------|---------------------------------|  
+|v        | Protocol version                              | v=DMARC1                        |  
+|pct      | Percentage of messages subjected to filtering | pct=20                          |  
+|ruf      | Reporting URI for forensic reports            | ruf=mailto:authfail@example.com |  
+|rua      | Reporting URI of aggregate reports            | rua=mailto:aggrep@example.com   |  
+|p        | Policy for organizational domain              | p=quarantine                    |  
+|sp       | Policy for subdomains of the OD               | sp=reject                       |  
+|adkim    | Alignment mode for DKIM                       | adkim=s                         |  
+|aspf     | Alignment mode for SPF                        | aspf=r                          |  
+
+To obtain the DMARC record, you need to query the `subdomain _dmarc`.
+```
+# Reject
+dig _dmarc.facebook.com txt | grep DMARC
+_dmarc.facebook.com.	3600	IN	TXT	"v=DMARC1; p=reject; rua=mailto:a@dmarc.facebookmail.com; ruf=mailto:fb-dmarc@datafeeds.phishlabs.com; pct=100"
+
+# Quarantine
+dig _dmarc.google.com txt | grep DMARC
+_dmarc.google.com.	300	IN	TXT	"v=DMARC1; p=quarantine; rua=mailto:mailauth-reports@google.com"
+
+# None
+dig _dmarc.bing.com txt | grep DMARC
+_dmarc.bing.com.	3600	IN	TXT	"v=DMARC1; p=none; pct=100; rua=mailto:BingEmailDMARC@microsoft.com;"
+```
+
 
 ## References
 [Cloudflare](https://www.cloudflare.com/learning/email-security/dmarc-dkim-spf)  
